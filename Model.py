@@ -17,7 +17,7 @@ import kashgari
 
 kashgari.config.use_cudnn_cell = True
 from kashgari.embeddings import BERTEmbedding
-from kashgari.tasks.labeling import BiLSTM_CRF_Model
+from kashgari.tasks.labeling import BiLSTM_Model,BiLSTM_CRF_Model,BiGRU_CRF_Model
 
 
 # 字-Vec的训练器
@@ -213,7 +213,7 @@ class BertTrainer:
                               task=kashgari.LABELING,
                               trainable=self.fine_tune,
                               sequence_length=self.seq_len)
-        model = BiLSTM_CRF_Model(embed)
+        model = BiGRU_CRF_Model(embed)
         return model
 
 

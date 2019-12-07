@@ -1,6 +1,6 @@
 from common.Entity import *
 from common.Utils import *
-from typing import Tuple, Dict
+from typing import Dict
 from collections import Counter
 import re
 import math
@@ -36,8 +36,8 @@ RELATION = [
     "SideEff-Drug"  # 不良反应-药品名称
 ]
 
-category2label = dict([(k, v) for v, k in enumerate(CATEGORY)])
-label2category = dict([(k, v) for k, v in enumerate(CATEGORY)])
+category2label = dict([(v, k + 1) for k, v in enumerate(CATEGORY)])
+label2category = dict([(k + 1, v) for k, v in enumerate(CATEGORY)])
 
 
 class DataSet:
@@ -289,21 +289,33 @@ class DataProcessor:
                 new_label_seq = []
                 # 标记位IO体系
                 for label in label_seq:
-                    if int(label) - 1 in label2category.keys():
-                        label = label2category[int(label) - 1]
+                    if int(label) in label2category.keys():
+                        label = label2category[int(label)]
                     else:
                         label = "O"
                     new_label_seq.append(label)
 
                 # 重写为BIO体系
-                for idx, l in enumerate(new_label_seq):
-                    if idx == 0 or idx == len(new_label_seq) - 1:
-                        pass
+                for idx, lab in enumerate(new_label_seq):
+                    # 跳过第1个，因为要根据每个元素的左边来修改BIO标注
+                    if idx == 0:
+                        if lab == "O":
+                            pass
+                        else:
+                            new_label_seq[idx] = "B_" + lab
                     else:
-                        if new_label_seq[idx - 1] == "O":
-                            new_label_seq[idx] = "B_" + l
-                        elif new_label_seq[idx - 1][2:] == l:
-                            new_label_seq[idx] = "I_" + l
+                        # 当前也是O，左边是O
+                        if lab == "O" and new_label_seq[idx - 1] == "O":
+                            pass
+                        # 当前不是O,左边是O
+                        elif lab != "O" and new_label_seq[idx - 1] == "O":
+                            new_label_seq[idx] = "B_" + lab
+                        # 当前不是O，左边不是O，而且与左边的标注相同
+                        elif lab != "O" and new_label_seq[idx - 1] != "O" and new_label_seq[idx - 1][2:] == lab:
+                            new_label_seq[idx] = "I_" + lab
+                        # 当前不是O，左边不是O，而且与左边的标注不同
+                        elif lab != "O" and new_label_seq[idx - 1] != "O" and new_label_seq[idx - 1][2:] != lab:
+                            new_label_seq[idx] = "B_" + lab
 
                 curr_seq = [c for c in curr_seq]
 
